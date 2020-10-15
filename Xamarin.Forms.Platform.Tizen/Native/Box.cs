@@ -1,6 +1,7 @@
 using System;
 using ElmSharp;
 using EBox = ElmSharp.Box;
+using ERect = ElmSharp.Rect;
 
 #if __MATERIAL__
 using Tizen.NET.MaterialComponents;
@@ -28,13 +29,13 @@ namespace Xamarin.Forms.Platform.Tizen.Native
 		public Box(EvasObject parent) : base(parent)
 		{
 			SetLayoutCallback(() => { NotifyOnLayout(); });
-		}		
+		}
 #endif
 
 		/// <summary>
 		/// The last processed geometry of the Box which was reported from the native layer.
 		/// </summary>
-		Rect _previousGeometry;
+		ERect _previousGeometry;
 
 		/// <summary>
 		/// Notifies that the layout has been updated.
@@ -60,9 +61,9 @@ namespace Xamarin.Forms.Platform.Tizen.Native
 				}
 
 				LayoutUpdated(this, new LayoutEventArgs()
-					{
-						Geometry = g,
-					}
+				{
+					Geometry = g,
+				}
 				);
 
 				_previousGeometry = g;

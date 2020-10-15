@@ -1,8 +1,8 @@
 using System;
 using Xamarin.Forms.Platform.Tizen.Native;
-using WatchDateTimePickerDialog = Xamarin.Forms.Platform.Tizen.Native.Watch.WatchDateTimePickerDialog;
 using EEntry = ElmSharp.Entry;
 using Specific = Xamarin.Forms.PlatformConfiguration.TizenSpecific.Application;
+using WatchDateTimePickerDialog = Xamarin.Forms.Platform.Tizen.Native.Watch.WatchDateTimePickerDialog;
 
 namespace Xamarin.Forms.Platform.Tizen
 {
@@ -39,7 +39,7 @@ namespace Xamarin.Forms.Platform.Tizen
 			if (Control == null)
 			{
 				var entry = CreateNativeControl();
-				entry.SetVerticalTextAlignment("elm.text", 0.5);
+				entry.SetVerticalTextAlignment(0.5);
 				SetNativeControl(entry);
 
 				if (entry is IEntry ie)
@@ -97,8 +97,8 @@ namespace Xamarin.Forms.Platform.Tizen
 				if (_lazyDialog.IsValueCreated)
 				{
 					_lazyDialog.Value.DateTimeChanged -= OnDateTimeChanged;
-					_lazyDialog.Value.PickerOpened += OnPickerOpened;
-					_lazyDialog.Value.PickerClosed += OnPickerClosed;
+					_lazyDialog.Value.PickerOpened -= OnPickerOpened;
+					_lazyDialog.Value.PickerClosed -= OnPickerClosed;
 					_lazyDialog.Value.Unrealize();
 				}
 			}

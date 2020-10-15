@@ -1,6 +1,6 @@
-﻿using Xamarin.Forms.CustomAttributes;
+﻿using System.Collections.Generic;
+using Xamarin.Forms.CustomAttributes;
 using Xamarin.Forms.Internals;
-using System.Collections.Generic;
 
 #if UITEST
 using Xamarin.Forms.Core.UITests;
@@ -21,7 +21,6 @@ namespace Xamarin.Forms.Controls.Issues
 		public Issue8958()
 		{
 #if APP
-			Device.SetFlags(new List<string>(Device.Flags ?? new List<string>()) { "IndicatorView_Experimental" });
 			InitializeComponent();
 #endif
 		}

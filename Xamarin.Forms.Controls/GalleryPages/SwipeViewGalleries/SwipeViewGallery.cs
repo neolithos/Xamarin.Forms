@@ -7,21 +7,14 @@ namespace Xamarin.Forms.Controls.GalleryPages.SwipeViewGalleries
 	{
 		public SwipeViewGallery()
 		{
-			var button = new Button
-			{
-				Text = "Enable SwipeView",
-				AutomationId = "EnableSwipeView"
-			};
-			button.Clicked += ButtonClicked;
-
 			Content = new ScrollView
 			{
 				Content = new StackLayout
 				{
 					Children =
 					{
-	 					button,
-						GalleryBuilder.NavButton("Basic SwipeView Gallery", () => new BasicSwipeGallery(), Navigation),
+	 					GalleryBuilder.NavButton("Basic SwipeView Gallery", () => new BasicSwipeGallery(), Navigation),
+						GalleryBuilder.NavButton("SwipeView Threshold Gallery", () => new SwipeThresholdGallery(), Navigation),
 						GalleryBuilder.NavButton("SwipeView Events Gallery", () => new SwipeViewEventsGallery(), Navigation),
 						GalleryBuilder.NavButton("SwipeItems from Resource Gallery", () => new ResourceSwipeItemsGallery(), Navigation),
 						GalleryBuilder.NavButton("BindableLayout Gallery", () => new SwipeBindableLayoutGallery(), Navigation),
@@ -36,6 +29,7 @@ namespace Xamarin.Forms.Controls.GalleryPages.SwipeViewGalleries
 						GalleryBuilder.NavButton("SwipeItem Icon Gallery", () => new SwipeItemIconGallery(), Navigation),
 						GalleryBuilder.NavButton("SwipeItem Size Gallery", () => new SwipeItemSizeGallery(), Navigation),
 						GalleryBuilder.NavButton("SwipeItem IsEnabled Gallery", () => new SwipeItemIsEnabledGallery(), Navigation),
+						GalleryBuilder.NavButton("SwipeItemView IsEnabled Gallery", () => new SwipeItemViewIsEnabledGallery(), Navigation),
  						GalleryBuilder.NavButton("SwipeItem IsVisible Gallery", () => new SwipeItemIsVisibleGallery(), Navigation),
 						GalleryBuilder.NavButton("SwipeTransitionMode Gallery", () => new SwipeTransitionModeGallery(), Navigation),
 						GalleryBuilder.NavButton("Add/Remove SwipeItems Gallery", () => new AddRemoveSwipeItemsGallery(), Navigation),
@@ -44,17 +38,6 @@ namespace Xamarin.Forms.Controls.GalleryPages.SwipeViewGalleries
 					}
 				}
 			};
-		}
-
-		void ButtonClicked(object sender, System.EventArgs e)
-		{
-			var button = sender as Button;
-
-			button.Text = "SwipeView Enabled!";
-			button.TextColor = Color.Black;
-			button.IsEnabled = false;
-
-			Device.SetFlags(new[] { ExperimentalFlags.SwipeViewExperimental, ExperimentalFlags.CarouselViewExperimental });
 		}
 	}
 }

@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using Xamarin.Forms.CustomAttributes;
 using Xamarin.Forms.Internals;
-using System.Linq;
-using System.Threading;
 
 #if UITEST
 using Xamarin.UITest;
@@ -19,6 +19,7 @@ namespace Xamarin.Forms.Controls.Issues
 	[Issue(IssueTracker.Github, 4597, "[Android] ImageCell not loading images and setting ImageSource to null has no effect",
 		PlatformAffected.Android)]
 #if UITEST
+	[NUnit.Framework.Category(Core.UITests.UITestCategories.Github5000)]
 	[NUnit.Framework.Category(UITestCategories.Image)]
 	[NUnit.Framework.Category(UITestCategories.ListView)]
 	[NUnit.Framework.Category(UITestCategories.UwpIgnore)]

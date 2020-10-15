@@ -1,15 +1,15 @@
 using System;
-using System.ComponentModel;
-using Android.Content;
-using Android.Webkit;
-using Android.OS;
-using Xamarin.Forms.PlatformConfiguration.AndroidSpecific;
-using Xamarin.Forms.Internals;
-using MixedContentHandling = Android.Webkit.MixedContentHandling;
-using AWebView = Android.Webkit.WebView;
-using System.Threading.Tasks;
-using System.Net;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Net;
+using System.Threading.Tasks;
+using Android.Content;
+using Android.OS;
+using Android.Webkit;
+using Xamarin.Forms.Internals;
+using Xamarin.Forms.PlatformConfiguration.AndroidSpecific;
+using AWebView = Android.Webkit.WebView;
+using MixedContentHandling = Android.Webkit.MixedContentHandling;
 
 namespace Xamarin.Forms.Platform.Android
 {
@@ -27,7 +27,7 @@ namespace Xamarin.Forms.Platform.Android
 
 		public WebViewRenderer(Context context) : base(context)
 		{
-			AutoPackage = false;			
+			AutoPackage = false;
 		}
 
 		[Obsolete("This constructor is obsolete as of version 2.5. Please use WebViewRenderer(Context) instead.")]
@@ -45,11 +45,16 @@ namespace Xamarin.Forms.Platform.Android
 
 		public void LoadUrl(string url)
 		{
-			if (!SendNavigatingCanceled(url))
+			LoadUrl(url, true);
+		}
+
+		void LoadUrl(string url, bool fireNavigatingCanceled)
+		{
+			if (!fireNavigatingCanceled || !SendNavigatingCanceled(url))
 			{
 				_eventState = WebNavigationEvent.NewPage;
 				Control.LoadUrl(url);
-			}	
+			}
 		}
 
 		protected internal bool SendNavigatingCanceled(string url)
@@ -111,7 +116,9 @@ namespace Xamarin.Forms.Platform.Android
 
 		protected override AWebView CreateNativeControl()
 		{
-			return new AWebView(Context);
+			var webView = new AWebView(Context);
+			webView.Settings.SetSupportMultipleWindows(true);
+			return webView;
 		}
 
 		internal WebNavigationEvent GetCurrentWebNavigationEvent()
@@ -137,7 +144,7 @@ namespace Xamarin.Forms.Platform.Android
 				_webChromeClient.SetContext(Context);
 				webView.SetWebChromeClient(_webChromeClient);
 
-				if(Context.IsDesignerContext())
+				if (Context.IsDesignerContext())
 				{
 					SetNativeControl(webView);
 					return;
@@ -198,16 +205,37 @@ namespace Xamarin.Forms.Platform.Android
 
 		HashSet<string> _loadedCookies = new HashSet<string>();
 
+		Uri CreateUriForCookies(string url)
+		{
+			if (url == null)
+				return null;
+
+			Uri uri;
+
+			if (url.Length > 2000)
+				url = url.Substring(0, 2000);
+
+			if (Uri.TryCreate(url, UriKind.Absolute, out uri))
+			{
+				if (String.IsNullOrWhiteSpace(uri.Host))
+					return null;
+
+				return uri;
+			}
+
+			return null;
+		}
+
 		CookieCollection GetCookiesFromNativeStore(string url)
 		{
 			CookieContainer existingCookies = new CookieContainer();
 			var cookieManager = CookieManager.Instance;
 			var currentCookies = cookieManager.GetCookie(url);
-			var uri = new Uri(url);
+			var uri = CreateUriForCookies(url);
 
 			if (currentCookies != null)
 			{
-				foreach(var cookie in currentCookies.Split(';'))
+				foreach (var cookie in currentCookies.Split(';'))
 					existingCookies.SetCookies(uri, cookie);
 			}
 
@@ -220,7 +248,9 @@ namespace Xamarin.Forms.Platform.Android
 			if (myCookieJar == null)
 				return;
 
-			var uri = new System.Uri(url);
+			var uri = CreateUriForCookies(url);
+			if (uri == null)
+				return;
 
 			if (!_loadedCookies.Add(uri.Host))
 				return;
@@ -240,14 +270,14 @@ namespace Xamarin.Forms.Platform.Android
 
 		internal void SyncNativeCookiesToElement(string url)
 		{
-			if (String.IsNullOrWhiteSpace(url))
-				return;
-
 			var myCookieJar = Element.Cookies;
 			if (myCookieJar == null)
 				return;
 
-			var uri = new Uri(url);
+			var uri = CreateUriForCookies(url);
+			if (uri == null)
+				return;
+
 			var cookies = myCookieJar.GetCookies(uri);
 			var retrieveCurrentWebCookies = GetCookiesFromNativeStore(url);
 
@@ -265,10 +295,10 @@ namespace Xamarin.Forms.Platform.Android
 
 		void SyncNativeCookies(string url)
 		{
-			if (String.IsNullOrWhiteSpace(url))
+			var uri = CreateUriForCookies(url);
+			if (uri == null)
 				return;
 
-			var uri = new Uri(url);
 			var myCookieJar = Element.Cookies;
 			if (myCookieJar == null)
 				return;
@@ -311,16 +341,16 @@ namespace Xamarin.Forms.Platform.Android
 
 		void OnEvalRequested(object sender, EvalRequested eventArg)
 		{
-			LoadUrl("javascript:" + eventArg.Script);
+			LoadUrl("javascript:" + eventArg.Script, false);
 		}
 
-		async Task<string> OnEvaluateJavaScriptRequested(string script)
+		Task<string> OnEvaluateJavaScriptRequested(string script)
 		{
 			var jsr = new JavascriptResult();
 
 			Control.EvaluateJavascript(script, jsr);
 
-			return await jsr.JsResult.ConfigureAwait(false);
+			return jsr.JsResult;
 		}
 
 		void OnGoBackRequested(object sender, EventArgs eventArgs)
@@ -329,7 +359,7 @@ namespace Xamarin.Forms.Platform.Android
 			{
 				_eventState = WebNavigationEvent.Back;
 				Control.GoBack();
-			}	
+			}
 
 			UpdateCanGoBackForward();
 		}
@@ -340,7 +370,7 @@ namespace Xamarin.Forms.Platform.Android
 			{
 				_eventState = WebNavigationEvent.Forward;
 				Control.GoForward();
-			}	
+			}
 
 			UpdateCanGoBackForward();
 		}

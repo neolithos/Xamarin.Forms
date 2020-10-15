@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Xamarin.Forms.Internals;
-using System.ComponentModel;
-using System.Linq;
 using Xamarin.Forms.StyleSheets;
 
 namespace Xamarin.Forms
@@ -56,6 +56,9 @@ namespace Xamarin.Forms
 									defaultValue: true,
 									propertyChanged: OnTabStopPropertyChanged,
 									defaultValueCreator: TabStopDefaultValueCreator);
+
+		public static readonly BindableProperty IsVisibleProperty =
+			BindableProperty.Create(nameof(IsVisible), typeof(bool), typeof(BaseShellItem), true);
 
 		static void OnTabIndexPropertyChanged(BindableObject bindable, object oldValue, object newValue) =>
 			((BaseShellItem)bindable).OnTabIndexPropertyChanged((int)oldValue, (int)newValue);
@@ -117,6 +120,22 @@ namespace Xamarin.Forms
 			set => SetValue(IsTabStopProperty, value);
 		}
 
+		public bool IsVisible
+		{
+			get => (bool)GetValue(IsVisibleProperty);
+			set => SetValue(IsVisibleProperty, value);
+		}
+
+		internal bool IsPartOfVisibleTree()
+		{
+			if (Parent is IShellController shell)
+				return shell.GetItems().Contains(this);
+			else if (Parent is ShellGroupItem sgi)
+				return sgi.ShellElementCollection.Contains(this);
+
+			return false;
+		}
+
 		internal virtual void SendAppearing()
 		{
 			if (_hasAppearing)
@@ -151,14 +170,14 @@ namespace Xamarin.Forms
 				action();
 			else
 			{
-				if(Navigation.ModalStack.Count > 0)
+				if (Navigation.ModalStack.Count > 0)
 				{
 					Navigation.ModalStack[Navigation.ModalStack.Count - 1]
 						.OnAppearing(action);
-					
+
 					return;
 				}
-				else if(Navigation.NavigationStack.Count > 1)
+				else if (Navigation.NavigationStack.Count > 1)
 				{
 					Navigation.NavigationStack[Navigation.NavigationStack.Count - 1]
 						.OnAppearing(action);
@@ -289,7 +308,23 @@ namespace Xamarin.Forms
 				.StyleClass = bindableObjectStyle;
 		}
 
-		internal static DataTemplate CreateDefaultFlyoutItemCell(IStyleSelectable styleSelectable, string textBinding, string iconBinding)
+		BindableObject NonImplicitParent
+		{
+			get
+			{
+				if (Parent is Shell)
+					return Parent;
+
+				var parent = (BaseShellItem)Parent;
+
+				if (!Routing.IsImplicit(parent))
+					return parent;
+
+				return parent.NonImplicitParent;
+			}
+		}
+
+		internal static DataTemplate CreateDefaultFlyoutItemCell(string textBinding, string iconBinding)
 		{
 			return new DataTemplate(() =>
 			{
@@ -320,9 +355,9 @@ namespace Xamarin.Forms
 					Class = DefaultFlyoutItemLayoutStyle,
 				};
 
-				
+
 				var groups = new VisualStateGroupList();
-				
+
 				var commonGroup = new VisualStateGroup();
 				commonGroup.Name = "CommonStates";
 				groups.Add(commonGroup);
@@ -340,6 +375,16 @@ namespace Xamarin.Forms
 					{
 						Property = VisualElement.BackgroundColorProperty,
 						Value = new Color(0.95)
+
+					});
+				}
+
+				if (Device.RuntimePlatform == Device.UWP)
+				{
+					normalState.Setters.Add(new Setter
+					{
+						Property = VisualElement.BackgroundColorProperty,
+						Value = Color.Transparent
 					});
 				}
 
@@ -381,7 +426,7 @@ namespace Xamarin.Forms
 				if (Device.RuntimePlatform == Device.UWP)
 				{
 					defaultImageClass.Setters.Add(new Setter { Property = Image.HorizontalOptionsProperty, Value = LayoutOptions.Start });
-					defaultImageClass.Setters.Add(new Setter { Property = Image.MarginProperty, Value = new Thickness(12, 0, 12, 0) });					
+					defaultImageClass.Setters.Add(new Setter { Property = Image.MarginProperty, Value = new Thickness(12, 0, 12, 0) });
 				}
 
 				Binding imageBinding = new Binding(iconBinding);
@@ -419,7 +464,16 @@ namespace Xamarin.Forms
 				nameScope.RegisterName("FlyoutItemImage", image);
 				nameScope.RegisterName("FlyoutItemLabel", label);
 
-				UpdateFlyoutItemStyles(grid, styleSelectable);
+				grid.BindingContextChanged += (sender, __) =>
+				{
+					if (sender is Grid g)
+					{
+						var bo = g.BindingContext as BindableObject;
+						var styleClassSource = Shell.GetBindableObjectWithFlyoutItemTemplate(bo) as IStyleSelectable;
+						UpdateFlyoutItemStyles(g, styleClassSource);
+					}
+				};
+
 				grid.Resources = new ResourceDictionary() { defaultGridClass, defaultLabelClass, defaultImageClass };
 				return grid;
 			});

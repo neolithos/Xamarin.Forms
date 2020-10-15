@@ -26,7 +26,7 @@ namespace Xamarin.Forms
 
 		IList<TriggerBase> _triggers;
 
-		public Style([TypeConverter(typeof(TypeTypeConverter))] [Parameter("TargetType")] Type targetType)
+		public Style([TypeConverter(typeof(TypeTypeConverter))][Parameter("TargetType")] Type targetType)
 		{
 			TargetType = targetType ?? throw new ArgumentNullException(nameof(targetType));
 			Setters = new List<Setter>();
@@ -106,11 +106,14 @@ namespace Xamarin.Forms
 		{
 			UnApplyCore(bindable, BasedOn ?? GetBasedOnResource(bindable));
 			bindable.RemoveDynamicResource(_basedOnResourceProperty);
-			_targets.RemoveAll(wr =>
+			lock (_targets)
 			{
-				BindableObject target;
-				return wr.TryGetTarget(out target) && target == bindable;
-			});
+				_targets.RemoveAll(wr =>
+				{
+					BindableObject target;
+					return wr != null && wr.TryGetTarget(out target) && target == bindable;
+				});
+			}
 		}
 
 		internal bool CanBeAppliedTo(Type targetType)
@@ -191,8 +194,11 @@ namespace Xamarin.Forms
 				return;
 			}
 
-			_targets.RemoveAll(t => t == null || !t.TryGetTarget(out _));
-			_cleanupThreshold = _targets.Count + CleanupTrigger;
+			lock (_targets)
+			{
+				_targets.RemoveAll(t => t == null || !t.TryGetTarget(out _));
+				_cleanupThreshold = _targets.Count + CleanupTrigger;
+			}
 		}
 	}
 }
